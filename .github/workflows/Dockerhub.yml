@@ -1,7 +1,6 @@
 name: Dockerhub
-
 on:
-  branches: [ main ]  # Triggers on pushes to the "main" branch
+  branches: [main]  # Triggers on pushes to the "main" branch
 
 jobs:
   build-and-push:  # Name of the job (optional)
