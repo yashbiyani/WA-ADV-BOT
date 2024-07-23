@@ -1,32 +1,14 @@
-FROM python:3.9-slim
-
-# Set working directory
-WORKDIR /code
+# Use the official Alpine base image with Python 3.9
+FROM python:3.9-alpine AS python-base
 
 # Install necessary packages
-RUN apt-get update && \
-    apt-get install -y \
-    curl \
-    wget \
+RUN apk update && apk add --no-cache \
     chromium \
-    libnss3 \
-    fonts-freefont-ttf \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-
-# Install Node.js 20.x
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs
-
-# Install the latest npm
-RUN npm install -g npm@latest
-
-# Create a non-root user
-RUN useradd -m -u 1000 user
-USER user
+    nss \
+    font-noto \
+    nodejs \
+    npm \
+    bash
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
@@ -37,8 +19,20 @@ ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 WORKDIR $HOME/app
 
+# Create a non-root user
+RUN adduser -D user
+
+# Create the necessary directory structure and set permissions
+RUN mkdir -p $HOME/app && chown -R user:user $HOME
+
+# Switch to the non-root user
+USER user
+
 # Copy application files and set user as owner
 COPY --chown=user . $HOME/app
+
+# Ensure the directory for node-persist is writable
+RUN mkdir -p $HOME/app/.node-persist && chmod 700 $HOME/app/.node-persist
 
 # Install Node.js dependencies
 RUN npm install
