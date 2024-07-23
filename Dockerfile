@@ -1,41 +1,39 @@
 # Use the official Alpine base image with Python 3.9
 FROM python:3.9-alpine AS python-base
 
-# Install necessary packages
+# Install necessary packages and create a non-root user
 RUN apk update && apk add --no-cache \
     chromium \
     nss \
     font-noto \
     nodejs \
     npm \
-    bash
+    bash \
+    && adduser -D user \
+    && mkdir -p /home/user/app \
+    && chown -R user:user /home/user
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
-# Set environment variables and working directory
-ENV HOME=/home/user \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
-WORKDIR $HOME/app
 
-# Create a non-root user
-RUN adduser -D user
-
-# Create the necessary directory structure and set permissions
-RUN mkdir -p $HOME/app && chown -R user:user $HOME
-
-# Switch to the non-root user
+# Set working directory and switch to the non-root user
+WORKDIR /home/user/app
 USER user
 
-# Copy application files and set user as owner
-COPY --chown=user . $HOME/app
+# Copy application files and set permissions
+COPY --chown=user . /home/user/app
 
 # Ensure the directory for node-persist is writable
-RUN mkdir -p $HOME/app/.node-persist && chmod 700 $HOME/app/.node-persist
+RUN mkdir -p /home/user/app/.node-persist && chmod 700 /home/user/app/.node-persist
 
 # Install Node.js dependencies
 RUN npm install
 
-# Command to run both the Uvicorn server and the Node.js app
-CMD ["bash", "-c", "uvicorn app:app --host 0.0.0.0 --port 7860 & node index.js"]
+# Expose port 7860
+EXPOSE 7860
+
+# Command to run the Node.js application
+CMD ["node", "index.js"]
