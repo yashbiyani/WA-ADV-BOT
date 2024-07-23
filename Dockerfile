@@ -15,7 +15,7 @@ RUN apk update && apk add --no-cache \
 
 # Set environment variables for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
